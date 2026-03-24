@@ -1,0 +1,24 @@
+name: sleep_cycle_alarm
+description: >
+  A production-ready sleep cycle alarm app with mini-game-based alarm
+  dismissal. Calculates optimal wake-up times using 90-minute cycles and
+  requires a 30-second survival driving game to shut off the alarm.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flame: ^1.21.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

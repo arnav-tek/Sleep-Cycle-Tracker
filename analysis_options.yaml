@@ -1,0 +1,12 @@
+# Strict Dart analysis — @lint-and-validate skill
+# Zero warnings, production-ready code.
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    avoid_print: false          # allow print in bin/ test harness
+    prefer_final_locals: true
+    sort_constructors_first: true
+    unnecessary_this: true
