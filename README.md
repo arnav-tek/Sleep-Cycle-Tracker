@@ -22,17 +22,6 @@ A premium, production-ready Flutter application designed to optimize your wake-u
 
 ---
 
-## 🛡️ Antigravity Skills Used
-
-This project was built using high-craft AI agent skills to ensure architectural integrity and visual excellence:
-
-*   **`@architecture`**: Implemented a strict modular structure separating the math engine (`lib/core`), game logic (`lib/game`), and UI components (`lib/screens`).
-*   **`@frontend-design`**: Crafted a "Calm/Apple" level visual experience with frosted glass effects and responsive neon styling.
-*   **`@flutter-expert`**: Applied modern M3 design patterns and efficient Flame game loop optimizations.
-*   **`@lint-and-validate`**: Ensured 100% clean analysis with zero errors or warnings.
-
----
-
 ## 🎮 How to Play (Alarm Mission)
 
 1.  **Select a Time**: Pick one of the calculated sleep cycles.
