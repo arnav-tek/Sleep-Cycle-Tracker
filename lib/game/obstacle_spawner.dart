@@ -12,7 +12,7 @@ class ObstacleSpawner extends Component with HasGameReference<WakeUpGame> {
 
   /// Starting speed of obstacles.
   double _currentSpeed = 300;
-  
+
   /// Base time between spawns.
   double _spawnInterval = 1.0;
   double _timeSinceLastSpawn = 0;
@@ -26,14 +26,18 @@ class ObstacleSpawner extends Component with HasGameReference<WakeUpGame> {
   void _spawnObstacle() {
     if (!game.isPlaying) return;
 
-    // Pick a random X within screen width (padding by 25 for obstacle half-width)
-    const double padding = 25.0;
-    final double randomX = 
+    // Pick a random X within screen width
+    const double padding = 30.0;
+    final double randomX =
         padding + _random.nextDouble() * (game.size.x - padding * 2);
 
-    final obstacle = Obstacle(speed: _currentSpeed)
-      ..position = Vector2(randomX, -50); 
-    
+    // Randomize size between 30 and 70
+    final double randomSize = 30.0 + _random.nextDouble() * 40.0;
+
+    final obstacle =
+        Obstacle(speed: _currentSpeed, sizeOverride: Vector2.all(randomSize))
+          ..position = Vector2(randomX, -70);
+
     // Add to game
     game.add(obstacle);
   }
@@ -42,13 +46,13 @@ class ObstacleSpawner extends Component with HasGameReference<WakeUpGame> {
   void update(double dt) {
     super.update(dt);
     if (!game.isPlaying) return;
-    
+
     _timeSinceLastSpawn += dt;
     if (_timeSinceLastSpawn >= _spawnInterval) {
       _spawnObstacle();
       _timeSinceLastSpawn = 0;
     }
-    
+
     // Gradually increase speed over time
     _currentSpeed += 10.0 * dt;
 

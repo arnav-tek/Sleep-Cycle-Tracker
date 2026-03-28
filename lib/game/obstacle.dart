@@ -9,10 +9,12 @@ import 'wake_up_game.dart';
 /// Skill: @architecture — modular component, manages its own lifecycle.
 /// Skill: @frontend-design — distinct visual contrast against dark UI.
 class Obstacle extends PositionComponent with HasGameReference<WakeUpGame> {
-  Obstacle({required this.speed}) : super(size: Vector2(50, 50));
+  Obstacle({required this.speed, Vector2? sizeOverride})
+      : super(size: sizeOverride ?? Vector2(50, 50));
 
   final double speed;
-  final _paint = Paint()..color = const Color(0xFFE0E0E0); // Off-white for contrast against #121212
+  final _paint = Paint()
+    ..color = const Color(0xFFE0E0E0); // Off-white for contrast against #121212
 
   @override
   void onLoad() {
@@ -41,7 +43,7 @@ class Obstacle extends PositionComponent with HasGameReference<WakeUpGame> {
   @override
   void update(double dt) {
     super.update(dt);
-    
+
     // Move downwards slowly
     position.y += speed * dt;
 
