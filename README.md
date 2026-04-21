@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-# Sleep-Cycle-Tracker
-Flutter Sleep Cycle Tracker
-=======
+
 # 🌙 Sleep Cycle Alarm & Neon Mini-Game
 
 A premium, production-ready Flutter application designed to optimize your wake-up routine. Calculate the perfect time to wake up based on 90-minute sleep cycles and dismiss your alarm with a high-octane neon driving challenge built on the Flame engine.
@@ -60,4 +57,3 @@ This project was built using high-craft AI agent skills to ensure architectural 
 ---
 
 *Built with ❤️ by Antigravity AI*
->>>>>>> 6867e0e (Initial commit: Premium Sleep Cycle Alarm with Flame Mini-Game)
