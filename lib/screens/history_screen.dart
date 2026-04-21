@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/app_state.dart';
+import '../luna_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// A Premium History Screen showing past sleep sessions.
@@ -28,7 +29,7 @@ class HistoryScreen extends StatelessWidget {
                     'History',
                     style: GoogleFonts.spaceGrotesk(
                         fontSize: 40,
-                        color: Colors.white,
+                        color: LunaTheme.onSurface,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -2.0),
                   ),
@@ -45,10 +46,7 @@ class HistoryScreen extends StatelessWidget {
                             return Container(
                               margin: const EdgeInsets.only(bottom: 12),
                               padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF131313),
-                                borderRadius: BorderRadius.circular(24),
-                              ),
+                              decoration: LunaTheme.surfaceCard(),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -60,7 +58,7 @@ class HistoryScreen extends StatelessWidget {
                                       Text(
                                         '${record.date.day} ${_getMonth(record.date.month)}',
                                         style: GoogleFonts.manrope(
-                                            color: const Color(0xFFADAAAA),
+                                            color: LunaTheme.onSurfaceVariant,
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600),
                                       ),
@@ -69,7 +67,8 @@ class HistoryScreen extends StatelessWidget {
                                         'Woke at ${_format(record.wakeUpTime)}',
                                         style: GoogleFonts.spaceGrotesk(
                                             fontSize: 20,
-                                            fontWeight: FontWeight.bold),
+                                            fontWeight: FontWeight.bold,
+                                            color: LunaTheme.onSurface),
                                       ),
                                     ],
                                   ),
@@ -79,11 +78,12 @@ class HistoryScreen extends StatelessWidget {
                                       Text('${record.durationHours}h',
                                           style: GoogleFonts.spaceGrotesk(
                                               fontSize: 18,
-                                              color: const Color(0xFF9D59FF),
+                                              color: LunaTheme.primary,
                                               fontWeight: FontWeight.bold)),
                                       Text('${record.count} Cycles',
                                           style: GoogleFonts.manrope(
-                                              color: const Color(0xFFADAAAA),
+                                              color:
+                                                  LunaTheme.onSurfaceVariant,
                                               fontSize: 11,
                                               fontWeight: FontWeight.w600)),
                                     ],
@@ -112,7 +112,7 @@ class HistoryScreen extends StatelessWidget {
             Icon(
               Icons.bedtime_outlined,
               size: 64,
-              color: const Color(0xFF9D59FF).withValues(alpha: 0.4),
+              color: LunaTheme.primary.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 24),
             Text(
@@ -120,7 +120,7 @@ class HistoryScreen extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: Colors.white70,
+                color: LunaTheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 8),
@@ -129,7 +129,7 @@ class HistoryScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.manrope(
                 fontSize: 14,
-                color: const Color(0xFFADAAAA),
+                color: LunaTheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),

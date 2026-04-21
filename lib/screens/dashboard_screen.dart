@@ -197,7 +197,7 @@ class DashboardScreen extends StatelessWidget {
                               title: 'Optimal Wake',
                               value: nextAlarm != null
                                   ? _formatTime(nextAlarm)
-                                  : '07:15',
+                                  : '--:--',
                               subtitle: 'Based on REM cycle',
                               color: LunaTheme.tertiaryDim,
                             ),

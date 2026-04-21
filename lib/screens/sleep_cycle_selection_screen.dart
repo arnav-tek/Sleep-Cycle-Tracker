@@ -360,24 +360,25 @@ class _SleepCycleSelectionScreenState
   _MoodConfig _getMoodConfig(String indicator) {
     switch (indicator) {
       case 'Skull':
-        return const _MoodConfig(
-            icon: Icons.battery_alert, color: LunaTheme.onSurfaceVariant);
+        return const _MoodConfig(icon: Icons.battery_alert);
       case 'Sad':
-        return const _MoodConfig(
-            icon: Icons.battery_3_bar, color: LunaTheme.tertiaryDim);
+        return const _MoodConfig(icon: Icons.battery_3_bar);
       default:
-        return const _MoodConfig(
-            icon: Icons.auto_awesome, color: LunaTheme.primary);
+        return const _MoodConfig(icon: Icons.auto_awesome);
     }
   }
 
-  String _fmt(DateTime dt) =>
-      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  String _fmt(DateTime dt) {
+    final hour = dt.hour;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = hour < 12 ? 'AM' : 'PM';
+    final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    return '$displayHour:$minute $period';
+  }
 }
 
 class _MoodConfig {
-  const _MoodConfig({required this.icon, required this.color});
+  const _MoodConfig({required this.icon});
 
   final IconData icon;
-  final Color color;
 }

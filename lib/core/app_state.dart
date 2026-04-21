@@ -36,27 +36,8 @@ class AppStateManager extends ChangeNotifier {
   int _fallAsleepBuffer = 15;
   int get fallAsleepBuffer => _fallAsleepBuffer;
 
-  /// Historical sleep records.
-  final List<SleepRecord> _history = [
-    SleepRecord(
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      wakeUpTime: DateTime.now()
-          .subtract(const Duration(days: 1))
-          .copyWith(hour: 7, minute: 15),
-      count: 6,
-      durationHours: 9.0,
-      mood: 'Happy',
-    ),
-    SleepRecord(
-      date: DateTime.now().subtract(const Duration(days: 2)),
-      wakeUpTime: DateTime.now()
-          .subtract(const Duration(days: 2))
-          .copyWith(hour: 6, minute: 45),
-      count: 5,
-      durationHours: 7.5,
-      mood: 'Sad',
-    ),
-  ];
+  /// Historical sleep records — starts empty, populated by real user sessions.
+  final List<SleepRecord> _history = [];
   List<SleepRecord> get history => List.unmodifiable(_history);
 
   void setAlarm(DateTime time) {
