@@ -56,4 +56,3 @@ This project was built using high-craft AI agent skills to ensure architectural 
 
 ---
 
-*Built with ❤️ by Antigravity AI*
