@@ -59,8 +59,8 @@ class WakeUpGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   void _handleCrash() {
     if (!isPlaying) return;
 
-    // Reset timer on hit
-    _timeLeft = 30.0;
+    // Penalty: add 10 seconds on crash (capped at 120s max)
+    _timeLeft = (_timeLeft + 10.0).clamp(0.0, 120.0);
     onTimeUpdate?.call(_timeLeft);
 
     // Clear all existing obstacles to give player a fair restart
@@ -114,7 +114,7 @@ class WakeUpGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       onMissionComplete();
     }
 
-    onTimeUpdate?.call(_timeLeft.clamp(0.0, 30.0));
+    onTimeUpdate?.call(_timeLeft.clamp(0.0, 120.0));
   }
 
 
