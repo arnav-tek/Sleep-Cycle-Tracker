@@ -83,6 +83,9 @@ class PlayerCar extends PositionComponent
   /// Sets the target X coordinate for steering.
   void setTargetX(double x) {
     _targetX = x;
+    if (isMounted) {
+      _targetX = _targetX.clamp(size.x / 2, game.size.x - size.x / 2).toDouble();
+    }
   }
 
   @override

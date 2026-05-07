@@ -1,13 +1,60 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:ui';
 import '../core/app_state.dart';
+import '../core/alarm_service.dart';
 import '../luna_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Dashboard — aligned with Stitch "Celestial Guardian" design.
-/// Layout: Hero alarm time → Sleep Quality card → Stats grid → 3-Day Mood Trend.
-class DashboardScreen extends StatelessWidget {
+/// Layout: Hero alarm time → Countdown → Sleep Quality card → Stats grid → 3-Day Mood Trend.
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  Timer? _countdownTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Tick every second to update countdown
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  void _cancelAlarm() {
+    AppStateManager().clearAlarm();
+    AlarmService.instance.cancelAlarm();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '🔕  Alarm cancelled',
+          style: GoogleFonts.manrope(
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: LunaTheme.surfaceHighest,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +97,6 @@ class DashboardScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Icon(Icons.menu_rounded,
-                              color: LunaTheme.onSurfaceVariant),
                           Text(
                             'LunaSleep',
                             style: GoogleFonts.spaceGrotesk(
@@ -102,34 +147,83 @@ class DashboardScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 12),
+
+                            // ── Status / Countdown Badge ──────────────────────
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-                                color: LunaTheme.surfaceHighest
-                                    .withValues(alpha: 0.6),
+                                color: nextAlarm != null
+                                    ? LunaTheme.primary.withValues(alpha: 0.12)
+                                    : LunaTheme.surfaceHighest
+                                        .withValues(alpha: 0.6),
                                 borderRadius: BorderRadius.circular(100),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.alarm_rounded,
-                                      size: 14,
-                                      color: LunaTheme.tertiaryDim),
+                                  Icon(
+                                    nextAlarm != null
+                                        ? Icons.timer_outlined
+                                        : Icons.alarm_rounded,
+                                    size: 14,
+                                    color: nextAlarm != null
+                                        ? LunaTheme.primary
+                                        : LunaTheme.tertiaryDim,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
                                     nextAlarm != null
-                                        ? '${_getDayName(nextAlarm.weekday)} ${nextAlarm.hour < 12 ? "Morning" : "Evening"}'
+                                        ? _countdownText(nextAlarm)
                                         : 'No alarm set',
                                     style: GoogleFonts.manrope(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
-                                      color: LunaTheme.onSurfaceVariant,
+                                      color: nextAlarm != null
+                                          ? LunaTheme.primary
+                                          : LunaTheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
+
+                            // ── Cancel Alarm Button ──────────────────────────
+                            if (nextAlarm != null) ...[
+                              const SizedBox(height: 12),
+                              GestureDetector(
+                                onTap: _cancelAlarm,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        LunaTheme.error.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(100),
+                                    border: Border.all(
+                                      color: LunaTheme.error
+                                          .withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.alarm_off_rounded,
+                                          size: 14, color: LunaTheme.error),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Cancel Alarm',
+                                        style: GoogleFonts.manrope(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: LunaTheme.error,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -245,13 +339,18 @@ class DashboardScreen extends StatelessWidget {
   String _formatTime(DateTime dt) =>
       '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
 
-  String _getDayName(int weekday) {
-    const days = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-      'Friday', 'Saturday', 'Sunday'
-    ];
-    return days[weekday - 1];
+  String _countdownText(DateTime target) {
+    final diff = target.difference(DateTime.now());
+    if (diff.isNegative) return 'Ringing now!';
+    final hours = diff.inHours;
+    final minutes = diff.inMinutes % 60;
+    final seconds = diff.inSeconds % 60;
+    if (hours > 0) return 'Rings in ${hours}h ${minutes}m';
+    if (minutes > 0) return 'Rings in ${minutes}m ${seconds}s';
+    return 'Rings in ${seconds}s';
   }
+
+
 
   String _computeAvgSleep(List<SleepRecord> history) {
     if (history.isEmpty) return '--';

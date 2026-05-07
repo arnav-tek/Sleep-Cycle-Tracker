@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/app_state.dart';
 import '../luna_theme.dart';
+import '../main.dart';
+import 'auth_screen.dart';
 
 /// Settings — aligned with Stitch reference.
-/// Features: sound/vol slider, vibration toggle, difficulty segmented control,
-/// sleep buffer toggle, smart wind-down.
+/// Now reads/writes all settings through [AppStateManager] for persistence.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -15,12 +16,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final AppStateManager _state = AppStateManager();
-
-  // Local UI state
-  double _volume = 0.7;
-  bool _vibrationEnabled = true;
-  bool _smartWindDown = true;
-  int _difficultyIndex = 1; // 0=Zen, 1=Adept, 2=Master
 
   final List<String> _difficulties = ['Zen', 'Adept', 'Master'];
 
@@ -85,7 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '${(_volume * 100).toInt()}%',
+                                      '${(_state.volume * 100).toInt()}%',
                                       style: GoogleFonts.spaceGrotesk(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
@@ -108,9 +103,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         LunaTheme.primary.withValues(alpha: 0.15),
                                   ),
                                   child: Slider(
-                                    value: _volume,
-                                    onChanged: (v) =>
-                                        setState(() => _volume = v),
+                                    value: _state.volume,
+                                    onChanged: (v) => _state.setVolume(v),
                                   ),
                                 ),
                               ],
@@ -124,8 +118,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         icon: Icons.vibration_rounded,
                         title: 'Vibration',
                         subtitle: 'Haptic pulse on alarm',
-                        value: _vibrationEnabled,
-                        onChanged: (v) => setState(() => _vibrationEnabled = v),
+                        value: _state.vibrationEnabled,
+                        onChanged: (v) => _state.setVibration(v),
                       ),
                     ],
                   ),
@@ -153,11 +147,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         child: Row(
                           children: List.generate(_difficulties.length, (i) {
-                            final isActive = _difficultyIndex == i;
+                            final isActive = _state.difficultyIndex == i;
                             return Expanded(
                               child: GestureDetector(
-                                onTap: () =>
-                                    setState(() => _difficultyIndex = i),
+                                onTap: () => _state.setDifficulty(i),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 200),
                                   padding:
@@ -220,8 +213,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         icon: Icons.auto_awesome_rounded,
                         title: 'Smart Wind-down',
                         subtitle: 'Gradual screen dimming',
-                        value: _smartWindDown,
-                        onChanged: (v) => setState(() => _smartWindDown = v),
+                        value: _state.smartWindDown,
+                        onChanged: (v) => _state.setSmartWindDown(v),
                       ),
                     ],
                   ),
@@ -244,6 +237,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
+
+                  // ── Account ──────────────────────────────────────────────
+                  _sectionLabel('Account'),
+                  _buildCard(
+                    children: [
+                      _buildTapRow(
+                        icon: Icons.logout_rounded,
+                        title: 'Sign Out',
+                        value: '',
+                        onTap: () async {
+                          await AuthScreen.signOut();
+                          if (!context.mounted) return;
+                          Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (_) => const AuthGate(),
+                            ),
+                            (_) => false,
+                          );
+                        },
+                        iconColor: LunaTheme.error,
+                        isDestructive: true,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -340,6 +359,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String title,
     required String value,
     required VoidCallback onTap,
+    Color? iconColor,
+    bool isDestructive = false,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -347,11 +368,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(
-              color: LunaTheme.surfaceHighest,
+            decoration: BoxDecoration(
+              color: isDestructive
+                  ? LunaTheme.error.withValues(alpha: 0.1)
+                  : LunaTheme.surfaceHighest,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: Colors.white, size: 20),
+            child: Icon(icon, color: iconColor ?? Colors.white, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -359,15 +382,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: GoogleFonts.manrope(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: LunaTheme.onSurface,
+                  color: isDestructive ? LunaTheme.error : LunaTheme.onSurface,
                 )),
           ),
-          Text(value,
-              style: GoogleFonts.manrope(
-                fontSize: 14,
-                color: LunaTheme.primary,
-                fontWeight: FontWeight.w700,
-              )),
+          if (value.isNotEmpty)
+            Text(value,
+                style: GoogleFonts.manrope(
+                  fontSize: 14,
+                  color: LunaTheme.primary,
+                  fontWeight: FontWeight.w700,
+                )),
           const SizedBox(width: 4),
           const Icon(Icons.chevron_right_rounded,
               color: LunaTheme.onSurfaceVariant, size: 18),
