@@ -64,7 +64,7 @@ class HistoryScreen extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Woke at ${_format(record.wakeUpTime)}',
+                                        'Woke at ${state.formatTime(record.wakeUpTime)}',
                                         style: GoogleFonts.spaceGrotesk(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
@@ -139,8 +139,6 @@ class HistoryScreen extends StatelessWidget {
     );
   }
 
-  String _format(DateTime dt) =>
-      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   String _getMonth(int m) => [
         'Jan',
         'Feb',

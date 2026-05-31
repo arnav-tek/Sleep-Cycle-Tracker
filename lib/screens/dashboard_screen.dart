@@ -136,7 +136,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   LunaTheme.ctaGradient.createShader(bounds),
                               child: Text(
                                 nextAlarm != null
-                                    ? _formatTime(nextAlarm)
+                                    ? state.formatTime(nextAlarm)
                                     : '--:--',
                                 style: GoogleFonts.spaceGrotesk(
                                   fontSize: 88,
@@ -254,7 +254,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      quality >= 80 ? 'Great' : 'Good',
+                                      state.sleepQualityLabel,
                                       style: GoogleFonts.spaceGrotesk(
                                         fontSize: 34,
                                         fontWeight: FontWeight.w800,
@@ -269,9 +269,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 14),
                             Text(
-                              quality >= 80
-                                  ? 'You slept ${_computeExtraHours(history)} longer than your average.'
-                                  : 'Try for one more cycle tonight for peak recovery.',
+                              _qualityInsight(state.sleepQualityLabel, history),
                               style: GoogleFonts.manrope(
                                 color: LunaTheme.onSurfaceVariant,
                                 fontSize: 13,
@@ -290,7 +288,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: _buildStatCard(
                               title: 'Optimal Wake',
                               value: nextAlarm != null
-                                  ? _formatTime(nextAlarm)
+                                  ? state.formatTime(nextAlarm)
                                   : '--:--',
                               subtitle: 'Based on REM cycle',
                               color: LunaTheme.tertiaryDim,
@@ -336,8 +334,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
-  String _formatTime(DateTime dt) =>
-      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
 
   String _countdownText(DateTime target) {
     final diff = target.difference(DateTime.now());
@@ -356,6 +352,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (history.isEmpty) return '--';
     final total = history.fold<double>(0, (s, r) => s + r.durationHours);
     return '${(total / history.length).toStringAsFixed(1)}h';
+  }
+
+  String _qualityInsight(String label, List<SleepRecord> history) {
+    switch (label) {
+      case 'Optimal':
+        return 'You slept ${_computeExtraHours(history)} longer than your average.';
+      case 'Good':
+        return 'Solid rest! One more cycle could reach optimal recovery.';
+      case 'Fair':
+        return 'Try for one more cycle tonight for better recovery.';
+      case 'Poor':
+        return 'You need more sleep. Aim for 7.5+ hours tonight.';
+      default:
+        return 'Set an alarm to start tracking your sleep quality.';
+    }
   }
 
   String _computeExtraHours(List<SleepRecord> history) {

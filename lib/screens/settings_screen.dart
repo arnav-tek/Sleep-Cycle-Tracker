@@ -224,6 +224,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _sectionLabel('Preferences'),
                   _buildCard(
                     children: [
+                      Text(
+                        'Time Format',
+                        style: GoogleFonts.manrope(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: LunaTheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: LunaTheme.background,
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => _state.setUse24hFormat(false),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: !_state.use24hFormat
+                                      ? BoxDecoration(
+                                          gradient: LunaTheme.ctaGradient,
+                                          borderRadius: BorderRadius.circular(100),
+                                        )
+                                      : BoxDecoration(
+                                          borderRadius: BorderRadius.circular(100),
+                                        ),
+                                  child: Center(
+                                    child: Text(
+                                      '12h',
+                                      style: GoogleFonts.manrope(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: !_state.use24hFormat
+                                            ? Colors.white
+                                            : LunaTheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => _state.setUse24hFormat(true),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: _state.use24hFormat
+                                      ? BoxDecoration(
+                                          gradient: LunaTheme.ctaGradient,
+                                          borderRadius: BorderRadius.circular(100),
+                                        )
+                                      : BoxDecoration(
+                                          borderRadius: BorderRadius.circular(100),
+                                        ),
+                                  child: Center(
+                                    child: Text(
+                                      '24h',
+                                      style: GoogleFonts.manrope(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: _state.use24hFormat
+                                            ? Colors.white
+                                            : LunaTheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _dividerSpace(),
                       _buildInfoRow(
                         icon: Icons.palette_outlined,
                         title: 'Theme',
