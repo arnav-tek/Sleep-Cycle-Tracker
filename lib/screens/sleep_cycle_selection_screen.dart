@@ -83,7 +83,7 @@ class _SleepCycleSelectionScreenState
       AlarmService.instance.scheduleAlarm(alarmTime);
     }
     final label = alarmTime.isAfter(DateTime.now())
-        ? '🌙  Alarm set for ${_fmtDt(alarmTime)}'
+        ? '🌙  Alarm set for ${AppStateManager().formatTime(alarmTime)}'
         : '⏰  Time already passed — scheduled for tomorrow';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -218,7 +218,7 @@ class _SleepCycleSelectionScreenState
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  _fmtDt(activeAlarm),
+                                  state.formatTime(activeAlarm),
                                   style: GoogleFonts.spaceGrotesk(
                                     fontSize: 26,
                                     fontWeight: FontWeight.w800,
@@ -425,7 +425,7 @@ class _SleepCycleSelectionScreenState
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          _fmtDt(res.wakeUpTime),
+                                          state.formatTime(res.wakeUpTime),
                                           style: GoogleFonts.spaceGrotesk(
                                             fontSize: 24,
                                             fontWeight: FontWeight.w800,
@@ -489,14 +489,6 @@ class _SleepCycleSelectionScreenState
       default:
         return const _MoodConfig(icon: Icons.auto_awesome);
     }
-  }
-
-  String _fmtDt(DateTime dt) {
-    final hour = dt.hour;
-    final minute = dt.minute.toString().padLeft(2, '0');
-    final period = hour < 12 ? 'AM' : 'PM';
-    final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-    return '$displayHour:$minute $period';
   }
 
   String _timeUntil(DateTime target) {

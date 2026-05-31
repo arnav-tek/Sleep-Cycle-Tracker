@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/app_state.dart';
+import '../core/sleep_quality_calculator.dart';
 import '../luna_theme.dart';
 
 class ActiveAlarmScreen extends StatefulWidget {
@@ -43,8 +44,15 @@ class _ActiveAlarmScreenState extends State<ActiveAlarmScreen>
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final hourString = now.hour.toString().padLeft(2, '0');
+    final state = AppStateManager();
+    final is24h = state.use24hFormat;
+    
+    final hour = now.hour;
     final minString = now.minute.toString().padLeft(2, '0');
+    final hourString = is24h
+        ? hour.toString().padLeft(2, '0')
+        : (hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour)).toString();
+    final periodString = is24h ? '' : (hour < 12 ? 'AM' : 'PM');
 
     return Scaffold(
       backgroundColor: LunaTheme.background,
@@ -203,6 +211,20 @@ class _ActiveAlarmScreenState extends State<ActiveAlarmScreen>
                                   color: Colors.white,
                                 ),
                               ),
+                              if (periodString.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 40),
+                                  child: Text(
+                                    periodString,
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ],
@@ -217,6 +239,17 @@ class _ActiveAlarmScreenState extends State<ActiveAlarmScreen>
                           letterSpacing: -0.5,
                         ),
                       ),
+                      if (state.selectedAlarmTime != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Alarm set for ${state.formatTime(state.selectedAlarmTime!)}',
+                          style: GoogleFonts.manrope(
+                            fontSize: 14,
+                            color: LunaTheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
 
@@ -322,20 +355,31 @@ class _ActiveAlarmScreenState extends State<ActiveAlarmScreen>
   }
 
   String _getSleepDuration() {
-    final history = AppStateManager().history;
-    if (history.isEmpty) return '-- --';
-    final last = history.first;
-    final hours = last.durationHours.floor();
-    final minutes = ((last.durationHours - hours) * 60).round();
+    final state = AppStateManager();
+    final bedTime = state.bedTime;
+    if (bedTime == null) return '-- --';
+
+    final buffer = state.fallAsleepBuffer;
+    final sleepStart = bedTime.add(Duration(minutes: buffer));
+    final rawMinutes = DateTime.now().difference(sleepStart).inMinutes;
+    final totalMinutes = rawMinutes.clamp(0, 720);
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
     return '${hours}h ${minutes}m';
   }
 
   String _getSleepQuality() {
-    final quality = AppStateManager().sleepQuality;
-    if (quality == 0) return '--';
-    if (quality >= 80) return 'Optimal';
-    if (quality >= 50) return 'Good';
-    return 'Light';
+    final state = AppStateManager();
+    final bedTime = state.bedTime;
+    if (bedTime == null) return '--';
+
+    final buffer = state.fallAsleepBuffer;
+    final sleepStart = bedTime.add(Duration(minutes: buffer));
+    final rawMinutes = DateTime.now().difference(sleepStart).inMinutes;
+    final durationHours = rawMinutes.clamp(0, 720) / 60.0;
+
+    final result = SleepQualityCalculator.calculate(durationHours);
+    return result.label;
   }
 
   Widget _buildMetricCard({

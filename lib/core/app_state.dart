@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'sleep_quality_calculator.dart';
+
 /// Represents a completed sleep session.
 class SleepRecord {
   SleepRecord({
@@ -56,6 +58,8 @@ class AppStateManager extends ChangeNotifier {
   static const _kVibration = 'vibration_enabled';
   static const _kDifficulty = 'difficulty_index';
   static const _kSmartWindDown = 'smart_wind_down';
+  static const _kBedTime = 'bed_time';
+  static const _kTimeFormat = 'time_format';
 
   bool _initialised = false;
   bool get isInitialised => _initialised;
@@ -66,6 +70,10 @@ class AppStateManager extends ChangeNotifier {
   DateTime? _selectedAlarmTime;
   DateTime? get selectedAlarmTime => _selectedAlarmTime;
 
+  /// The time the user went to bed (recorded when alarm is set).
+  DateTime? _bedTime;
+  DateTime? get bedTime => _bedTime;
+
   /// Whether the alarm is currently ringing (runtime-only, not persisted).
   bool _alarmIsRinging = false;
   bool get alarmIsRinging => _alarmIsRinging;
@@ -73,6 +81,9 @@ class AppStateManager extends ChangeNotifier {
   /// User-configurable buffer for falling asleep.
   int _fallAsleepBuffer = 15;
   int get fallAsleepBuffer => _fallAsleepBuffer;
+
+  bool _use24hFormat = false;
+  bool get use24hFormat => _use24hFormat;
 
   /// Historical sleep records.
   final List<SleepRecord> _history = [];
@@ -105,8 +116,18 @@ class AppStateManager extends ChangeNotifier {
       _selectedAlarmTime = DateTime.tryParse(alarmStr);
     }
 
+    // Bed time
+    final bedStr = prefs.getString(_kBedTime);
+    if (bedStr != null) {
+      _bedTime = DateTime.tryParse(bedStr);
+    }
+
     // Buffer
     _fallAsleepBuffer = prefs.getInt(_kBuffer) ?? 15;
+
+    // Time Format
+    final formatStr = prefs.getString(_kTimeFormat);
+    _use24hFormat = formatStr == '24h';
 
     // History
     final historyJson = prefs.getString(_kHistory);
@@ -132,12 +153,14 @@ class AppStateManager extends ChangeNotifier {
 
   void setAlarm(DateTime time) {
     _selectedAlarmTime = time;
+    _bedTime = DateTime.now();
     _save();
     notifyListeners();
   }
 
   void clearAlarm() {
     _selectedAlarmTime = null;
+    _bedTime = null;
     _save();
     notifyListeners();
   }
@@ -148,8 +171,14 @@ class AppStateManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setBuffer(int minutes) {
-    _fallAsleepBuffer = minutes;
+  void setBuffer(int buffer) {
+    _fallAsleepBuffer = buffer;
+    _save();
+    notifyListeners();
+  }
+
+  void setUse24hFormat(bool use24h) {
+    _use24hFormat = use24h;
     _save();
     notifyListeners();
   }
@@ -184,12 +213,32 @@ class AppStateManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Calculates "Sleep Quality" percentage based on cycle count.
-  /// 6 cycles = 100 %, 5 cycles = 85 %, etc.
+  /// Sleep quality percentage based on actual sleep duration.
+  /// Uses [SleepQualityCalculator] with smooth linear interpolation.
   int get sleepQuality {
     if (_history.isEmpty) return 0;
     final last = _history.first;
-    return (last.count / 6 * 100).clamp(0, 100).toInt();
+    return SleepQualityCalculator.calculate(last.durationHours).percentage;
+  }
+
+  /// Human-readable quality label: Poor, Fair, Good, or Optimal.
+  String get sleepQualityLabel {
+    if (_history.isEmpty) return '--';
+    final last = _history.first;
+    return SleepQualityCalculator.calculate(last.durationHours).label;
+  }
+
+  /// Formats a time according to the user's 12h/24h preference.
+  String formatTime(DateTime time) {
+    final hour = time.hour;
+    final minute = time.minute.toString().padLeft(2, '0');
+    if (_use24hFormat) {
+      return '${hour.toString().padLeft(2, '0')}:$minute';
+    } else {
+      final period = hour < 12 ? 'AM' : 'PM';
+      final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+      return '$displayHour:$minute $period';
+    }
   }
 
   // ── Persistence ─────────────────────────────────────────────────────────────
@@ -202,6 +251,14 @@ class AppStateManager extends ChangeNotifier {
     } else {
       await prefs.remove(_kAlarmTime);
     }
+
+    if (_bedTime != null) {
+      await prefs.setString(_kBedTime, _bedTime!.toIso8601String());
+    } else {
+      await prefs.remove(_kBedTime);
+    }
+
+    await prefs.setString(_kTimeFormat, _use24hFormat ? '24h' : '12h');
 
     await prefs.setInt(_kBuffer, _fallAsleepBuffer);
 

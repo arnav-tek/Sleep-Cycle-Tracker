@@ -1,10 +1,9 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/app_state.dart';
-import '../game/wake_up_game.dart';
+import '../game/space_shooter_game.dart';
 import '../luna_theme.dart';
 
 /// Wake-Up Challenge — aligned with Stitch reference.
@@ -32,37 +31,19 @@ class MissionScreen extends StatefulWidget {
 
 class _MissionScreenState extends State<MissionScreen> {
   bool _missionComplete = false;
-  int _points = 0;
-  double _timeDisplay = 30.0;
-  double _maxTime = 30.0;
-  late WakeUpGame _game;
+  late SpaceShooterGame _game;
 
   @override
   void initState() {
     super.initState();
-    _game = WakeUpGame(
+    _game = SpaceShooterGame(
       onMissionComplete: _onMissionComplete,
-      onTimeUpdate: _onTimeUpdate,
-      onPointsUpdate: _onPointsUpdate,
     );
   }
 
   void _onMissionComplete() {
     if (!mounted) return;
     setState(() => _missionComplete = true);
-  }
-
-  void _onTimeUpdate(double t) {
-    if (!mounted) return;
-    setState(() {
-      _timeDisplay = t;
-      if (t > _maxTime) _maxTime = t;
-    });
-  }
-
-  void _onPointsUpdate(int p) {
-    if (!mounted) return;
-    setState(() => _points = p);
   }
 
   void _dismissAlarm() {
@@ -403,7 +384,7 @@ class _MissionScreenState extends State<MissionScreen> {
                             size: 16, color: Color(0xFF00E676)),
                         const SizedBox(width: 8),
                         Text(
-                          'Challenge Complete — $_points pts',
+                          'Challenge Complete — 50 pts',
                           style: GoogleFonts.manrope(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -483,244 +464,61 @@ class _MissionScreenState extends State<MissionScreen> {
 
   // ─── Game Screen ────────────────────────────────────────────────────────────
   Widget _buildGameScreen() {
-    final displayMinutes = (_timeDisplay / 60).floor();
-    final displaySeconds = _timeDisplay.ceil() % 60;
-    final timeStr = '${displayMinutes.toString().padLeft(2, '0')}:${displaySeconds.toString().padLeft(2, '0')}';
-
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: const Color(0xFF0E0E0E),
       body: SafeArea(
         child: Stack(
           children: [
-            // ── Game canvas ──────────────────────────────────────────────────
-            GameWidget(game: _game),
-
-            // ── HUD: TIME + POINTS & Instructions (top) ──────────────────────
+            GameWidget(
+              game: _game,
+            ),
+            
+            // Overlays outside Flame to ensure accessibility (like Snooze)
             Positioned(
-              top: 16,
+              bottom: 30,
               left: 20,
               right: 20,
-              child: Column(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 16),
-                        decoration: BoxDecoration(
-                          color:
-                              LunaTheme.surfaceHighest.withValues(alpha: 0.4),
-                          border: Border.all(
-                            color:
-                                LunaTheme.outlineVariant.withValues(alpha: 0.1),
-                          ),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'TIME REMAINING',
-                                  style: GoogleFonts.manrope(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    color: LunaTheme.onSurfaceVariant,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  timeStr,
-                                  style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w700,
-                                    color: _timeDisplay > 30
-                                        ? LunaTheme.error
-                                        : LunaTheme.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'POINTS',
-                                  style: GoogleFonts.manrope(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    color: LunaTheme.onSurfaceVariant,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '$_points',
-                                  style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w700,
-                                    color: LunaTheme.tertiaryDim,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+              child: Center(
+                child: TextButton(
+                  onPressed: () {
+                    // Snooze logic (could be connected to AlarmService)
+                    _dismissAlarm(); // fallback behavior
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: LunaTheme.surfaceHighest.withValues(alpha: 0.6),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: LunaTheme.background.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Text(
-                      _timeDisplay > 30
-                          ? '⚠️ +10s penalty! Survive ${_timeDisplay.ceil()}s to dismiss'
-                          : 'Keep driving for ${_timeDisplay.ceil()}s to dismiss alarm',
-                      style: GoogleFonts.manrope(
-                        color: _timeDisplay > 30
-                            ? LunaTheme.error
-                            : LunaTheme.onSurface,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  child: Text(
+                    'SNOOZE (9 MIN)',
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2.0,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: 200,
-                    height: 4,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: LinearProgressIndicator(
-                        value: _timeDisplay <= 0
-                            ? 1.0
-                            : (1.0 - (_timeDisplay / _maxTime)).clamp(0.0, 1.0),
-                        backgroundColor: LunaTheme.surfaceHighest,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          _timeDisplay > 30
-                              ? LunaTheme.error
-                              : LunaTheme.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-
-            // ── Controls & Speedometer (Bottom) ─────────────────────────────
+            
+            // Drag Hint
             Positioned(
-              bottom: 32,
-              left: 20,
-              right: 20,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Left Control Arrow
-                  GestureDetector(
-                    onTap: () => _game.tapLeft(),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(32),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color:
-                                LunaTheme.surfaceHighest.withValues(alpha: 0.4),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            color: LunaTheme.onSurface,
-                            size: 24,
-                          ),
-                        ),
-                      ),
-                    ),
+              bottom: 100,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  'DRAG TO MOVE',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 14,
+                    color: Colors.white.withValues(alpha: 0.3),
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2.0,
                   ),
-
-                  // Speed Display
-                  SizedBox(
-                    width: 120,
-                    height: 120,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 100,
-                          height: 100,
-                          child: CircularProgressIndicator(
-                            value:
-                                0.65, // Arbitrary visual fill mimicking gauge
-                            strokeWidth: 6,
-                            backgroundColor: LunaTheme.surfaceHighest,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                LunaTheme.primary),
-                          ),
-                        ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '82',
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: LunaTheme.onSurface,
-                                height: 1.0,
-                              ),
-                            ),
-                            Text(
-                              'KM/H',
-                              style: GoogleFonts.manrope(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: LunaTheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Right Control Arrow
-                  GestureDetector(
-                    onTap: () => _game.tapRight(),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(32),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color:
-                                LunaTheme.surfaceHighest.withValues(alpha: 0.4),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            color: LunaTheme.onSurface,
-                            size: 24,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ],

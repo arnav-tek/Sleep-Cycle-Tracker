@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'luna_theme.dart';
 import 'core/app_state.dart';
 import 'core/alarm_service.dart';
+import 'core/sleep_quality_calculator.dart';
 import 'screens/active_alarm_screen.dart';
 import 'screens/mission_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -150,26 +151,30 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   void _onGameComplete() {
     final now = DateTime.now();
-    final alarm = AppStateManager().selectedAlarmTime;
+    final state = AppStateManager();
+    final alarm = state.selectedAlarmTime;
 
     AlarmService.instance.dismiss();
 
-    // Build a real sleep record from the alarm data.
+    // Build a sleep record using actual bedtime and fall-asleep buffer.
     if (alarm != null) {
-      // Estimate sleep duration: time from ~8 hours before alarm to now.
-      // If the user used Sleep Setup, the alarm was set to a calculated wake time.
-      // We use: duration = difference between alarm time set and 'bedtime' implied.
-      // Since we don't store bedtime, approximate from alarm minus buffer.
-      final buffer = AppStateManager().fallAsleepBuffer;
-      final estimatedBedTime = alarm.subtract(Duration(
-        minutes: buffer + (AppStateManager().difficultyIndex + 1) * 90,
-      ));
-      final rawHours = now.difference(estimatedBedTime).inMinutes / 60.0;
-      final durationHours = rawHours.clamp(1.0, 12.0); // sanity clamp
-      final cycles = (durationHours / 1.5).round().clamp(1, 6);
-      final mood = cycles >= 5 ? 'Happy' : (cycles >= 3 ? 'Okay' : 'Tired');
+      final buffer = state.fallAsleepBuffer;
+      // Use stored bedtime; fall back to 8h before alarm if unknown.
+      final bedTime = state.bedTime ??
+          alarm.subtract(const Duration(hours: 8));
 
-      AppStateManager().addRecord(
+      // Sleep duration = wake-up time − bedtime − fall-asleep buffer.
+      // Never show negative values.
+      final sleepStart = bedTime.add(Duration(minutes: buffer));
+      final rawMinutes = now.difference(sleepStart).inMinutes;
+      final durationMinutes = rawMinutes.clamp(0, 720); // cap at 12 hours
+      final durationHours = durationMinutes / 60.0;
+
+      final cycles = (durationHours / 1.5).round().clamp(1, 6);
+      final quality = SleepQualityCalculator.calculate(durationHours);
+      final mood = SleepQualityCalculator.moodForQuality(quality.percentage);
+
+      state.addRecord(
         SleepRecord(
           date: now,
           wakeUpTime: now,
@@ -181,7 +186,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     }
 
     if (mounted) {
-      AppStateManager().setAlarmRinging(false);
+      state.setAlarmRinging(false);
       setState(() => _showGameOverlay = false);
     }
   }
@@ -298,8 +303,8 @@ class _AlarmGameInterceptState extends State<_AlarmGameIntercept> {
   bool _showGame = false;
 
   void _snooze() {
-    // In a real app we'd reschedule the background alarm for 9 mins from now
-    AlarmService.instance.dismiss(); // dismiss current
+    // Reschedule the alarm for 9 minutes from now
+    AlarmService.instance.snooze();
     widget.onDismissed();
   }
 
